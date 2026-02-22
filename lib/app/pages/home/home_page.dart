@@ -27,7 +27,7 @@ class HomePage extends GetView<HomeController> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(height: 36.h),
-                    _buildHeader(cs),
+                    _buildHeader(),
                     SizedBox(height: 32.h),
                     _buildDifficultyCards(),
                     SizedBox(height: 24.h),
@@ -47,37 +47,29 @@ class HomePage extends GetView<HomeController> {
     );
   }
 
-  Widget _buildHeader(ColorScheme cs) {
-    return Column(
-      children: [
-        Text('💣', style: TextStyle(fontSize: 56.sp)),
-        SizedBox(height: 8.h),
-        Text(
-          'app_name'.tr,
-          style: TextStyle(
-            fontSize: 30.sp,
-            fontWeight: FontWeight.w900,
-            color: cs.onSurface,
-          ),
-        ),
-        SizedBox(height: 6.h),
-        Text(
-          'home_subtitle'.tr,
-          style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
+  Widget _buildHeader() {
+    return const _AnimatedHeader();
   }
 
   Widget _buildDifficultyCards() {
+    final diffs = Difficulty.values.where((d) => d != Difficulty.custom).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ...Difficulty.values.where((d) => d != Difficulty.custom).map((diff) {
+        ...List.generate(diffs.length, (index) {
+          final diff = diffs[index];
           return Padding(
             padding: EdgeInsets.only(bottom: 12.h),
-            child: _DifficultyCard(difficulty: diff),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: Duration(milliseconds: 400 + index * 80),
+              curve: Curves.easeOut,
+              builder: (ctx, v, child) => Transform.translate(
+                offset: Offset(0, (1 - v) * 24),
+                child: Opacity(opacity: v, child: child),
+              ),
+              child: _DifficultyCard(difficulty: diff),
+            ),
           );
         }),
         const _CustomCard(),
@@ -97,13 +89,20 @@ class HomePage extends GetView<HomeController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'best_records'.tr,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: cs.onSurfaceVariant,
-            ),
+          Row(
+            children: [
+              Icon(Icons.emoji_events_rounded,
+                  color: const Color(0xFFFFD600), size: 18.r),
+              SizedBox(width: 6.w),
+              Text(
+                'best_records'.tr,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 12.h),
           ...Difficulty.values
@@ -119,13 +118,23 @@ class HomePage extends GetView<HomeController> {
                     diff.labelKey.tr,
                     style: TextStyle(fontSize: 13.sp, color: cs.onSurface),
                   ),
-                  Text(
-                    best != null ? '${best}s' : 'no_record'.tr,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: best != null ? cs.primary : cs.onSurfaceVariant,
-                    ),
+                  Row(
+                    children: [
+                      if (best != null)
+                        Padding(
+                          padding: EdgeInsets.only(right: 4.w),
+                          child: Icon(Icons.timer_outlined,
+                              size: 14.r, color: cs.primary),
+                        ),
+                      Text(
+                        best != null ? '${best}s' : 'no_record'.tr,
+                        style: TextStyle(
+                          fontSize: best != null ? 15.sp : 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: best != null ? cs.primary : cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -137,12 +146,89 @@ class HomePage extends GetView<HomeController> {
   }
 }
 
-class _DifficultyCard extends StatelessWidget {
+// ────────────────────────────────────────────────────────────────
+// Animated Header: emoji bounces in, title fades in with delay
+// ────────────────────────────────────────────────────────────────
+class _AnimatedHeader extends StatelessWidget {
+  const _AnimatedHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.elasticOut,
+          builder: (ctx, v, child) =>
+              Transform.scale(scale: v, child: child),
+          child: Text('💣', style: TextStyle(fontSize: 56.sp)),
+        ),
+        SizedBox(height: 8.h),
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+          builder: (ctx, v, child) => Opacity(opacity: v, child: child),
+          child: Text(
+            'app_name'.tr,
+            style: TextStyle(
+              fontSize: 30.sp,
+              fontWeight: FontWeight.w900,
+              color: cs.onSurface,
+            ),
+          ),
+        ),
+        SizedBox(height: 6.h),
+        Text(
+          'home_subtitle'.tr,
+          style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// _DifficultyCard: press scale feedback via AnimationController
+// ────────────────────────────────────────────────────────────────
+class _DifficultyCard extends StatefulWidget {
   final Difficulty difficulty;
   const _DifficultyCard({required this.difficulty});
 
+  @override
+  State<_DifficultyCard> createState() => _DifficultyCardState();
+}
+
+class _DifficultyCardState extends State<_DifficultyCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      lowerBound: 0,
+      upperBound: 1,
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
   Color _color() {
-    switch (difficulty) {
+    switch (widget.difficulty) {
       case Difficulty.beginner:
         return const Color(0xFF43A047);
       case Difficulty.intermediate:
@@ -159,56 +245,65 @@ class _DifficultyCard extends StatelessWidget {
     final color = _color();
 
     return GestureDetector(
-      onTap: () {
+      onTapDown: (_) => _ctrl.forward(),
+      onTapUp: (_) {
+        _ctrl.reverse();
         final ctrl = Get.find<GameController>();
-        ctrl.initGame(diff: difficulty);
+        ctrl.initGame(diff: widget.difficulty);
         Get.toNamed(Routes.GAME);
       },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color.withValues(alpha: 0.85),
-              color.withValues(alpha: 0.55),
-            ],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(14.r),
-        ),
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  difficulty.labelKey.tr,
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  '${difficulty.rows}×${difficulty.cols}  💣 ${difficulty.mines}',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.white.withValues(alpha: 0.85),
-                  ),
-                ),
+      onTapCancel: () => _ctrl.reverse(),
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                color.withValues(alpha: 0.85),
+                color.withValues(alpha: 0.55),
               ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
             ),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
-          ],
+            borderRadius: BorderRadius.circular(14.r),
+          ),
+          child: Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.difficulty.labelKey.tr,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    '${widget.difficulty.rows}×${widget.difficulty.cols}  💣 ${widget.difficulty.mines}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+// ────────────────────────────────────────────────────────────────
+// _CustomCard (unchanged)
+// ────────────────────────────────────────────────────────────────
 class _CustomCard extends StatelessWidget {
   const _CustomCard();
 
