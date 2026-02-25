@@ -1,13 +1,26 @@
-import 'package:get/get.dart';
-
+﻿import 'package:get/get.dart';
 import 'package:minesweeper_classic/app/controllers/game_controller.dart';
 import 'package:minesweeper_classic/app/controllers/home_controller.dart';
 import 'package:minesweeper_classic/app/controllers/setting_controller.dart';
 import 'package:minesweeper_classic/app/services/hive_service.dart';
+import 'package:minesweeper_classic/app/services/activity_log_service.dart';
+import 'package:minesweeper_classic/app/controllers/history_controller.dart';
+import 'package:minesweeper_classic/app/controllers/stats_controller.dart';
+
+import 'package:minesweeper_classic/app/services/purchase_service.dart';
+import 'package:minesweeper_classic/app/controllers/premium_controller.dart';
 
 class AppBinding implements Bindings {
   @override
   void dependencies() {
+    if (!Get.isRegistered<PurchaseService>()) {
+      Get.put(PurchaseService(), permanent: true);
+    }
+
+    if (!Get.isRegistered<PremiumController>()) {
+      Get.lazyPut(() => PremiumController());
+    }
+
     if (!Get.isRegistered<HiveService>()) {
       Get.put(HiveService(), permanent: true);
     }
@@ -21,5 +34,15 @@ class AppBinding implements Bindings {
     }
 
     Get.lazyPut(() => HomeController(), fenix: true);
-  }
+  
+if (!Get.isRegistered<ActivityLogService>()) {
+      Get.put(ActivityLogService(), permanent: true);
+    }
+if (!Get.isRegistered<HistoryController>()) {
+      Get.lazyPut(() => HistoryController());
+    }
+if (!Get.isRegistered<StatsController>()) {
+      Get.lazyPut(() => StatsController());
+    }}
 }
+

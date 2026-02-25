@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
@@ -17,31 +18,46 @@ class HomePage extends GetView<HomeController> {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: 36.h),
-                    _buildHeader(),
-                    SizedBox(height: 32.h),
-                    _buildDifficultyCards(),
-                    SizedBox(height: 24.h),
-                    _buildBestRecords(cs),
-                    SizedBox(height: 24.h),
-                  ],
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cs.surface,
+                cs.surfaceContainerLowest.withValues(alpha: 0.93),
+                cs.surface.withValues(alpha: 0.95),
+              ],
+            ),
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: 32.h),
+                      _buildHeader(),
+                      SizedBox(height: 28.h),
+                      _buildDifficultyCards(),
+                      SizedBox(height: 20.h),
+                      _buildBestRecords(cs),
+                      SizedBox(height: 24.h),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            BannerAdWidget(
-              adUnitId: AdHelper.bannerAdUnitId,
-              type: AdHelper.banner,
-            ),
-          ],
+              BannerAdWidget(
+                adUnitId: AdHelper.bannerAdUnitId,
+                type: AdHelper.banner,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -53,6 +69,7 @@ class HomePage extends GetView<HomeController> {
 
   Widget _buildDifficultyCards() {
     final diffs = Difficulty.values.where((d) => d != Difficulty.custom).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -62,7 +79,7 @@ class HomePage extends GetView<HomeController> {
             padding: EdgeInsets.only(bottom: 12.h),
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: 400 + index * 80),
+              duration: Duration(milliseconds: 380 + index * 90),
               curve: Curves.easeOut,
               builder: (ctx, v, child) => Transform.translate(
                 offset: Offset(0, (1 - v) * 24),
@@ -78,21 +95,28 @@ class HomePage extends GetView<HomeController> {
   }
 
   Widget _buildBestRecords(ColorScheme cs) {
-    final gameCtrl = Get.find<GameController>();
+    final gameCtrl = GameController.to;
+
     return Container(
       padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: cs.outlineVariant),
+        color: cs.surfaceContainerLow.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: cs.shadow.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.emoji_events_rounded,
-                  color: const Color(0xFFFFD600), size: 18.r),
+              Icon(Icons.emoji_events_rounded, color: const Color(0xFFFFD600), size: 18.r),
               SizedBox(width: 6.w),
               Text(
                 'best_records'.tr,
@@ -123,8 +147,11 @@ class HomePage extends GetView<HomeController> {
                       if (best != null)
                         Padding(
                           padding: EdgeInsets.only(right: 4.w),
-                          child: Icon(Icons.timer_outlined,
-                              size: 14.r, color: cs.primary),
+                          child: Icon(
+                            Icons.timer_outlined,
+                            size: 14.r,
+                            color: cs.primary,
+                          ),
                         ),
                       Text(
                         best != null ? '${best}s' : 'no_record'.tr,
@@ -146,31 +173,36 @@ class HomePage extends GetView<HomeController> {
   }
 }
 
-// ────────────────────────────────────────────────────────────────
-// Animated Header: emoji bounces in, title fades in with delay
-// ────────────────────────────────────────────────────────────────
 class _AnimatedHeader extends StatelessWidget {
   const _AnimatedHeader();
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
     return Column(
       children: [
         TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 620),
           curve: Curves.elasticOut,
           builder: (ctx, v, child) =>
               Transform.scale(scale: v, child: child),
-          child: Text('💣', style: TextStyle(fontSize: 56.sp)),
+          child: Icon(
+            Icons.celebration,
+            color: cs.primary,
+            size: 56.r,
+          ),
         ),
         SizedBox(height: 8.h),
         TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: 1),
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeOut,
-          builder: (ctx, v, child) => Opacity(opacity: v, child: child),
+          builder: (ctx, v, child) => Opacity(
+            opacity: v,
+            child: Transform.translate(offset: Offset(0, (1 - v) * 8), child: child),
+          ),
           child: Text(
             'app_name'.tr,
             style: TextStyle(
@@ -183,7 +215,11 @@ class _AnimatedHeader extends StatelessWidget {
         SizedBox(height: 6.h),
         Text(
           'home_subtitle'.tr,
-          style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: cs.onSurfaceVariant,
+            height: 1.35,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -191,9 +227,6 @@ class _AnimatedHeader extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────
-// _DifficultyCard: press scale feedback via AnimationController
-// ────────────────────────────────────────────────────────────────
 class _DifficultyCard extends StatefulWidget {
   final Difficulty difficulty;
   const _DifficultyCard({required this.difficulty});
@@ -248,51 +281,74 @@ class _DifficultyCardState extends State<_DifficultyCard>
       onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) {
         _ctrl.reverse();
-        final ctrl = Get.find<GameController>();
+        final ctrl = GameController.to;
         ctrl.initGame(diff: widget.difficulty);
         Get.toNamed(Routes.GAME);
       },
       onTapCancel: () => _ctrl.reverse(),
       child: ScaleTransition(
         scale: _scale,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
                 color.withValues(alpha: 0.85),
-                color.withValues(alpha: 0.55),
+                color.withValues(alpha: 0.58),
               ],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
             borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.difficulty.labelKey.tr,
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    '${widget.difficulty.rows}×${widget.difficulty.cols}  💣 ${widget.difficulty.mines}',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
-                  ),
-                ],
+              Icon(
+                Icons.grid_on,
+                color: Colors.white,
+                size: 24.r,
               ),
-              const Spacer(),
-              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.difficulty.labelKey.tr,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      '${widget.difficulty.rows}x${widget.difficulty.cols} · ${widget.difficulty.mines}',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '▶',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ),
@@ -301,23 +357,27 @@ class _DifficultyCardState extends State<_DifficultyCard>
   }
 }
 
-// ────────────────────────────────────────────────────────────────
-// _CustomCard (unchanged)
-// ────────────────────────────────────────────────────────────────
 class _CustomCard extends StatelessWidget {
   const _CustomCard();
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final ctrl = Get.find<GameController>();
+    final ctrl = GameController.to;
 
     return Container(
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: cs.outlineVariant),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: cs.shadow.withValues(alpha: 0.07),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,21 +407,21 @@ class _CustomCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           Obx(() => _buildSlider(
-            cs: cs,
-            label: '${'custom_rows'.tr}: ${ctrl.customRows.value}',
-            value: ctrl.customRows.value.toDouble(),
-            min: 5,
-            max: 20,
-            onChanged: (v) => ctrl.customRows.value = v.round(),
-          )),
+                cs: cs,
+                label: '${'custom_rows'.tr}: ${ctrl.customRows.value}',
+                value: ctrl.customRows.value.toDouble(),
+                min: 5,
+                max: 20,
+                onChanged: (v) => ctrl.customRows.value = v.round(),
+              )),
           Obx(() => _buildSlider(
-            cs: cs,
-            label: '${'custom_cols'.tr}: ${ctrl.customCols.value}',
-            value: ctrl.customCols.value.toDouble(),
-            min: 5,
-            max: 30,
-            onChanged: (v) => ctrl.customCols.value = v.round(),
-          )),
+                cs: cs,
+                label: '${'custom_cols'.tr}: ${ctrl.customCols.value}',
+                value: ctrl.customCols.value.toDouble(),
+                min: 5,
+                max: 30,
+                onChanged: (v) => ctrl.customCols.value = v.round(),
+              )),
           Obx(() {
             final maxMines = ((ctrl.customRows.value * ctrl.customCols.value) * 0.35)
                 .floor()
@@ -394,7 +454,7 @@ class _CustomCard extends StatelessWidget {
     return Row(
       children: [
         SizedBox(
-          width: 100.w,
+          width: 108.w,
           child: Text(
             label,
             style: TextStyle(fontSize: 11.sp, color: cs.onSurfaceVariant),
@@ -405,7 +465,9 @@ class _CustomCard extends StatelessWidget {
             value: value.clamp(min, max),
             min: min,
             max: max.clamp(min + 1, 200),
-            divisions: (max.clamp(min + 1, 200) - min).round().clamp(1, 199),
+            divisions: (max.clamp(min + 1, 200) - min)
+                .round()
+                .clamp(1, 199),
             onChanged: onChanged,
           ),
         ),
