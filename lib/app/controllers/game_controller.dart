@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'package:minesweeper_classic/app/data/enums/difficulty.dart';
@@ -14,6 +15,7 @@ class Cell {
   bool isRevealed;
   bool isFlagged;
   bool isExploded;
+  bool isWrongFlag;
   int adjacentMines;
 
   Cell({
@@ -21,6 +23,7 @@ class Cell {
     this.isRevealed = false,
     this.isFlagged = false,
     this.isExploded = false,
+    this.isWrongFlag = false,
     this.adjacentMines = 0,
   });
 }
@@ -45,6 +48,9 @@ class GameController extends GetxController {
   // ─── Timer ─────────────────────────────────────────────────────
   final RxInt elapsed = 0.obs;
   Timer? _timer;
+
+  // ─── Confetti ──────────────────────────────────────────────────
+  final RxBool showConfetti = false.obs;
 
   // ─── Computed dims ─────────────────────────────────────────────
   int get rows =>
@@ -164,6 +170,7 @@ class GameController extends GetxController {
       }
 
       // Game over
+      HapticFeedback.heavyImpact();
       grid[row][col].isExploded = true;
       grid[row][col].isRevealed = true;
       _revealAllMines();
@@ -173,7 +180,16 @@ class GameController extends GetxController {
       return;
     }
 
+    final revealedBefore = _countRevealed();
     _floodReveal(row, col);
+    final revealedAfter = _countRevealed();
+
+    if (revealedAfter - revealedBefore > 1) {
+      HapticFeedback.lightImpact();
+    } else {
+      HapticFeedback.selectionClick();
+    }
+
     grid.refresh();
     _checkWin();
   }
@@ -206,6 +222,16 @@ class GameController extends GetxController {
     }
   }
 
+  int _countRevealed() {
+    int count = 0;
+    for (int r = 0; r < rows; r++) {
+      for (int c = 0; c < cols; c++) {
+        if (grid[r][c].isRevealed) count++;
+      }
+    }
+    return count;
+  }
+
   void _recomputeAdjacent(int mineRow, int mineCol) {
     for (int dr = -1; dr <= 1; dr++) {
       for (int dc = -1; dc <= 1; dc++) {
@@ -221,8 +247,13 @@ class GameController extends GetxController {
   void _revealAllMines() {
     for (int r = 0; r < rows; r++) {
       for (int c = 0; c < cols; c++) {
+        // 지뢰인데 아직 공개되지 않은 경우 공개
         if (grid[r][c].isMine && !grid[r][c].isExploded) {
           grid[r][c].isRevealed = true;
+        }
+        // 깃발이 꽂혀 있는데 지뢰가 없는 경우 오표시 처리
+        if (grid[r][c].isFlagged && !grid[r][c].isMine) {
+          grid[r][c].isWrongFlag = true;
         }
       }
     }
@@ -236,6 +267,7 @@ class GameController extends GetxController {
     final cell = grid[row][col];
     if (cell.isRevealed) return;
 
+    HapticFeedback.lightImpact();
     grid[row][col].isFlagged = !grid[row][col].isFlagged;
     flagCount.value += grid[row][col].isFlagged ? 1 : -1;
     remainingMines.value = totalMines - flagCount.value;
@@ -251,9 +283,11 @@ class GameController extends GetxController {
       }
     }
 
+    HapticFeedback.mediumImpact();
     status.value = GameStatus.won;
     _stopTimer();
     _saveBestRecord();
+    showConfetti.value = true;
 
     // Auto-flag all mines
     for (int r = 0; r < rows; r++) {

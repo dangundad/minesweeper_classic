@@ -72,6 +72,25 @@ class CellWidget extends StatelessWidget {
   }
 
   Widget _buildContent(ColorScheme cs) {
+    // 오표시 깃발: 깃발이 꽂혀 있으나 지뢰가 없는 셀 (게임 오버 후 표시)
+    if (cell.isWrongFlag) {
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Text('🚩', style: TextStyle(fontSize: size * 0.5)),
+          Text(
+            '✕',
+            style: TextStyle(
+              fontSize: size * 0.65,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFFC62828),
+              height: 1,
+            ),
+          ),
+        ],
+      );
+    }
+
     if (cell.isFlagged && !cell.isRevealed) {
       return Text('🚩', style: TextStyle(fontSize: size * 0.5));
     }
