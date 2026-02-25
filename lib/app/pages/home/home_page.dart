@@ -99,15 +99,22 @@ class HomePage extends GetView<HomeController> {
     final gameCtrl = GameController.to;
 
     return Container(
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(18.r),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow.withValues(alpha: 0.7),
+        gradient: LinearGradient(
+          colors: [
+            cs.primaryContainer.withValues(alpha: 0.55),
+            cs.secondaryContainer.withValues(alpha: 0.38),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: cs.outline.withValues(alpha: 0.4)),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
         boxShadow: [
           BoxShadow(
-            color: cs.shadow.withValues(alpha: 0.08),
-            blurRadius: 12,
+            color: cs.primary.withValues(alpha: 0.10),
+            blurRadius: 14,
             offset: const Offset(0, 6),
           ),
         ],
@@ -117,51 +124,74 @@ class HomePage extends GetView<HomeController> {
         children: [
           Row(
             children: [
-              Icon(Icons.emoji_events_rounded, color: const Color(0xFFFFD600), size: 18.r),
-              SizedBox(width: 6.w),
+              Icon(Icons.emoji_events_rounded, color: const Color(0xFFFFD600), size: 20.r),
+              SizedBox(width: 8.w),
               Text(
                 'best_records'.tr,
                 style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurfaceVariant,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w800,
+                  color: cs.onSurface,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 14.h),
           ...Difficulty.values
               .where((d) => d != Difficulty.custom)
               .map((diff) {
             final best = gameCtrl.getBestRecord(diff);
             return Padding(
-              padding: EdgeInsets.symmetric(vertical: 4.h),
+              padding: EdgeInsets.symmetric(vertical: 5.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    diff.labelKey.tr,
-                    style: TextStyle(fontSize: 13.sp, color: cs.onSurface),
+                  Row(
+                    children: [
+                      Container(
+                        width: 8.r,
+                        height: 8.r,
+                        decoration: BoxDecoration(
+                          color: _difficultyColor(diff),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        diff.labelKey.tr,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
                   Row(
                     children: [
-                      if (best != null)
-                        Padding(
-                          padding: EdgeInsets.only(right: 4.w),
-                          child: Icon(
-                            Icons.timer_outlined,
-                            size: 14.r,
+                      if (best != null) ...[
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 14.r,
+                          color: cs.primary,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          '${best}s',
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w800,
                             color: cs.primary,
                           ),
                         ),
-                      Text(
-                        best != null ? '${best}s' : 'no_record'.tr,
-                        style: TextStyle(
-                          fontSize: best != null ? 15.sp : 13.sp,
-                          fontWeight: FontWeight.w700,
-                          color: best != null ? cs.primary : cs.onSurfaceVariant,
+                      ] else
+                        Text(
+                          'no_record'.tr,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ],
@@ -171,6 +201,19 @@ class HomePage extends GetView<HomeController> {
         ],
       ),
     );
+  }
+
+  Color _difficultyColor(Difficulty diff) {
+    switch (diff) {
+      case Difficulty.beginner:
+        return const Color(0xFF43A047);
+      case Difficulty.intermediate:
+        return const Color(0xFFF57C00);
+      case Difficulty.expert:
+        return const Color(0xFFC62828);
+      default:
+        return const Color(0xFF6A1B9A);
+    }
   }
 }
 
@@ -240,6 +283,7 @@ class _DifficultyCardState extends State<_DifficultyCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _scale;
+  bool _isPressed = false;
 
   @override
   void initState() {
@@ -279,14 +323,21 @@ class _DifficultyCardState extends State<_DifficultyCard>
     final color = _color();
 
     return GestureDetector(
-      onTapDown: (_) => _ctrl.forward(),
+      onTapDown: (_) {
+        _ctrl.forward();
+        setState(() => _isPressed = true);
+      },
       onTapUp: (_) {
         _ctrl.reverse();
+        setState(() => _isPressed = false);
         final ctrl = GameController.to;
         ctrl.initGame(diff: widget.difficulty);
         Get.toNamed(Routes.GAME);
       },
-      onTapCancel: () => _ctrl.reverse(),
+      onTapCancel: () {
+        _ctrl.reverse();
+        setState(() => _isPressed = false);
+      },
       child: ScaleTransition(
         scale: _scale,
         child: AnimatedContainer(
@@ -303,13 +354,22 @@ class _DifficultyCardState extends State<_DifficultyCard>
             ),
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(color: color.withValues(alpha: 0.3)),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.25),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
-            ],
+            boxShadow: _isPressed
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.45),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
           ),
           child: Row(
             children: [
@@ -394,15 +454,43 @@ class _CustomCard extends StatelessWidget {
                   color: cs.onSurface,
                 ),
               ),
-              FilledButton(
-                onPressed: () {
-                  ctrl.initGame(diff: Difficulty.custom);
-                  Get.toNamed(Routes.GAME);
-                },
-                style: FilledButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [cs.primary, cs.tertiary],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.primary.withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Text('play'.tr),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10.r),
+                    onTap: () {
+                      ctrl.initGame(diff: Difficulty.custom);
+                      Get.toNamed(Routes.GAME);
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 9.h),
+                      child: Text(
+                        'play'.tr,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
