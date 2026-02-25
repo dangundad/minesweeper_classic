@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:minesweeper_classic/app/admob/ads_banner.dart';
 import 'package:minesweeper_classic/app/admob/ads_helper.dart';
@@ -189,7 +190,7 @@ class _AnimatedHeader extends StatelessWidget {
           builder: (ctx, v, child) =>
               Transform.scale(scale: v, child: child),
           child: Icon(
-            Icons.celebration,
+            LucideIcons.bomb,
             color: cs.primary,
             size: 56.r,
           ),
