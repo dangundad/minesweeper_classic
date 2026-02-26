@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
@@ -56,7 +57,7 @@ class WonDialog extends GetView<GameController> {
               ],
             ),
           ],
-        ),
+        ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.2, end: 0),
       ),
     );
   }
@@ -154,7 +155,7 @@ class LostDialog extends GetView<GameController> {
               ],
             ),
           ],
-        ),
+        ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.2, end: 0),
       ),
     );
   }

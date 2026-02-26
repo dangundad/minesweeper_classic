@@ -6,14 +6,24 @@ import 'package:minesweeper_classic/app/controllers/game_controller.dart';
 import 'package:minesweeper_classic/app/data/enums/game_status.dart';
 import 'package:minesweeper_classic/app/pages/game/widgets/cell_widget.dart';
 import 'package:minesweeper_classic/app/pages/game/widgets/result_dialog.dart';
+import 'package:minesweeper_classic/app/widgets/confetti_overlay.dart';
 
-class GamePage extends GetView<GameController> {
+class GamePage extends StatefulWidget {
   const GamePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Show dialogs on status change
-    ever(controller.status, (status) {
+  State<GamePage> createState() => _GamePageState();
+}
+
+class _GamePageState extends State<GamePage> {
+  late final GameController _controller;
+  late final Worker _statusWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = GameController.to;
+    _statusWorker = ever(_controller.status, (status) {
       if (status == GameStatus.won) {
         Future.delayed(const Duration(milliseconds: 500), () {
           if (Get.isDialogOpen != true) {
@@ -28,7 +38,17 @@ class GamePage extends GetView<GameController> {
         });
       }
     });
+  }
 
+  @override
+  void dispose() {
+    _statusWorker.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
     return Scaffold(
       appBar: AppBar(
         title: Text('app_name'.tr, style: TextStyle(fontSize: 18.sp)),
@@ -41,20 +61,33 @@ class GamePage extends GetView<GameController> {
         ],
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // ─── Top Bar ─────────────────────────────────────────
-            _TopBar(controller: controller),
+            Column(
+              children: [
+                // ─── Top Bar ─────────────────────────────────────
+                _TopBar(controller: controller),
 
-            // ─── Grid ────────────────────────────────────────────
-            Expanded(
-              child: Obx(() {
-                if (controller.grid.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                return _GameGrid(controller: controller);
-              }),
+                // ─── Grid ────────────────────────────────────────
+                Expanded(
+                  child: Obx(() {
+                    if (controller.grid.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    return _GameGrid(controller: controller);
+                  }),
+                ),
+              ],
             ),
+
+            // ─── Confetti ────────────────────────────────────────
+            Obx(() => controller.showConfetti.value
+                ? IgnorePointer(
+                    child: ConfettiOverlay(
+                      onComplete: () => controller.showConfetti.value = false,
+                    ),
+                  )
+                : const SizedBox.shrink()),
           ],
         ),
       ),
