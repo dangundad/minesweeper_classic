@@ -40,6 +40,7 @@ class Languages extends Translations {
       // App
       'app_name': 'Minesweeper',
       'home_subtitle': 'Find all mines without detonating one!',
+      'select_difficulty': 'SELECT DIFFICULTY',
 
       // Difficulty
       'diff_beginner': 'Beginner',
@@ -122,6 +123,7 @@ class Languages extends Translations {
       // App
       'app_name': '지뢰 찾기',
       'home_subtitle': '지뢰를 건드리지 않고 모두 찾으세요!',
+      'select_difficulty': '난이도 선택',
       // Difficulty
       'diff_beginner': '초급',
       'diff_intermediate': '중급',

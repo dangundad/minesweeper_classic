@@ -19,53 +19,147 @@ class HomePage extends GetView<HomeController> {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                cs.surface,
-                cs.surfaceContainerLowest.withValues(alpha: 0.93),
-                cs.surface.withValues(alpha: 0.95),
-              ],
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          'app_name'.tr,
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w900,
+            color: cs.onSurface,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(LucideIcons.settings, size: 22.r, color: cs.onSurfaceVariant),
+            onPressed: () => Get.toNamed(Routes.SETTINGS),
+            tooltip: 'settings'.tr,
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(3),
+          child: Container(
+            height: 3,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [cs.primary, cs.tertiary],
+              ),
             ),
           ),
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(height: 32.h),
-                      _buildHeader(),
-                      SizedBox(height: 28.h),
-                      _buildDifficultyCards(),
-                      SizedBox(height: 20.h),
-                      _buildBestRecords(cs),
-                      SizedBox(height: 24.h),
-                    ],
-                  ),
-                ),
-              ),
-              BannerAdWidget(
-                adUnitId: AdHelper.bannerAdUnitId,
-                type: AdHelper.banner,
-              ),
+        ),
+      ),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              cs.surface,
+              cs.surfaceContainerLowest.withValues(alpha: 0.93),
+              cs.surface.withValues(alpha: 0.95),
             ],
           ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: 28.h),
+                    _buildHeroSection(cs),
+                    SizedBox(height: 28.h),
+                    _buildSectionLabel(cs, LucideIcons.layers, 'select_difficulty'.tr),
+                    SizedBox(height: 12.h),
+                    _buildDifficultyCards(),
+                    SizedBox(height: 20.h),
+                    _buildBestRecords(cs),
+                    SizedBox(height: 24.h),
+                  ],
+                ),
+              ),
+            ),
+            BannerAdWidget(
+              adUnitId: AdHelper.bannerAdUnitId,
+              type: AdHelper.banner,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return const _AnimatedHeader();
+  Widget _buildHeroSection(ColorScheme cs) {
+    return Column(
+      children: [
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 620),
+          curve: Curves.elasticOut,
+          builder: (ctx, v, child) => Transform.scale(scale: v, child: child),
+          child: Container(
+            width: 110.r,
+            height: 110.r,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  cs.primaryContainer,
+                  cs.primaryContainer.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+            child: Center(
+              child: Icon(LucideIcons.bomb, size: 60.r, color: cs.primary),
+            ),
+          ),
+        ),
+        SizedBox(height: 14.h),
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+          builder: (ctx, v, child) => Opacity(
+            opacity: v,
+            child: Transform.translate(offset: Offset(0, (1 - v) * 8), child: child),
+          ),
+          child: Text(
+            'home_subtitle'.tr,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: cs.onSurfaceVariant,
+              height: 1.35,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionLabel(ColorScheme cs, IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 16.r, color: cs.primary),
+        SizedBox(width: 6.w),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w700,
+            color: cs.onSurfaceVariant,
+            letterSpacing: 0.4,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildDifficultyCards() {
@@ -99,22 +193,21 @@ class HomePage extends GetView<HomeController> {
     final gameCtrl = GameController.to;
 
     return Container(
-      padding: EdgeInsets.all(18.r),
+      padding: EdgeInsets.all(20.r),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            cs.primaryContainer.withValues(alpha: 0.55),
-            cs.secondaryContainer.withValues(alpha: 0.38),
+            cs.primaryContainer,
+            cs.secondaryContainer.withValues(alpha: 0.7),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
+        borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: cs.primary.withValues(alpha: 0.10),
-            blurRadius: 14,
+            color: cs.primary.withValues(alpha: 0.12),
+            blurRadius: 16,
             offset: const Offset(0, 6),
           ),
         ],
@@ -136,13 +229,13 @@ class HomePage extends GetView<HomeController> {
               ),
             ],
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 16.h),
           ...Difficulty.values
               .where((d) => d != Difficulty.custom)
               .map((diff) {
             final best = gameCtrl.getBestRecord(diff);
             return Padding(
-              padding: EdgeInsets.symmetric(vertical: 5.h),
+              padding: EdgeInsets.symmetric(vertical: 6.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -217,60 +310,6 @@ class HomePage extends GetView<HomeController> {
   }
 }
 
-class _AnimatedHeader extends StatelessWidget {
-  const _AnimatedHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Column(
-      children: [
-        TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 620),
-          curve: Curves.elasticOut,
-          builder: (ctx, v, child) =>
-              Transform.scale(scale: v, child: child),
-          child: Icon(
-            LucideIcons.bomb,
-            color: cs.primary,
-            size: 56.r,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOut,
-          builder: (ctx, v, child) => Opacity(
-            opacity: v,
-            child: Transform.translate(offset: Offset(0, (1 - v) * 8), child: child),
-          ),
-          child: Text(
-            'app_name'.tr,
-            style: TextStyle(
-              fontSize: 30.sp,
-              fontWeight: FontWeight.w900,
-              color: cs.onSurface,
-            ),
-          ),
-        ),
-        SizedBox(height: 6.h),
-        Text(
-          'home_subtitle'.tr,
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: cs.onSurfaceVariant,
-            height: 1.35,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
 class _DifficultyCard extends StatefulWidget {
   final Difficulty difficulty;
   const _DifficultyCard({required this.difficulty});
@@ -318,6 +357,19 @@ class _DifficultyCardState extends State<_DifficultyCard>
     }
   }
 
+  IconData _icon() {
+    switch (widget.difficulty) {
+      case Difficulty.beginner:
+        return LucideIcons.smile;
+      case Difficulty.intermediate:
+        return LucideIcons.zap;
+      case Difficulty.expert:
+        return LucideIcons.skull;
+      default:
+        return LucideIcons.settings2;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = _color();
@@ -352,7 +404,7 @@ class _DifficultyCardState extends State<_DifficultyCard>
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(16.r),
             border: Border.all(color: color.withValues(alpha: 0.3)),
             boxShadow: _isPressed
                 ? [
@@ -373,12 +425,18 @@ class _DifficultyCardState extends State<_DifficultyCard>
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.grid_on,
-                color: Colors.white,
-                size: 24.r,
+              Container(
+                width: 44.r,
+                height: 44.r,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Center(
+                  child: Icon(_icon(), color: Colors.white, size: 24.r),
+                ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: 14.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,9 +449,9 @@ class _DifficultyCardState extends State<_DifficultyCard>
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 2.h),
+                    SizedBox(height: 3.h),
                     Text(
-                      '${widget.difficulty.rows}x${widget.difficulty.cols} · ${widget.difficulty.mines}',
+                      '${widget.difficulty.rows}×${widget.difficulty.cols} · ${widget.difficulty.mines} mines',
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: Colors.white.withValues(alpha: 0.85),
@@ -402,14 +460,7 @@ class _DifficultyCardState extends State<_DifficultyCard>
                   ],
                 ),
               ),
-              Text(
-                '▶',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Icon(LucideIcons.chevronRight, color: Colors.white.withValues(alpha: 0.9), size: 20.r),
             ],
           ),
         ),
@@ -429,9 +480,9 @@ class _CustomCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: cs.outline.withValues(alpha: 0.45)),
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
             color: cs.shadow.withValues(alpha: 0.07),
@@ -446,51 +497,28 @@ class _CustomCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'diff_custom'.tr,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface,
-                ),
+              Row(
+                children: [
+                  Icon(LucideIcons.slidersHorizontal, size: 18.r, color: cs.primary),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'diff_custom'.tr,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ],
               ),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [cs.primary, cs.tertiary],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: cs.primary.withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10.r),
-                    onTap: () {
-                      ctrl.initGame(diff: Difficulty.custom);
-                      Get.toNamed(Routes.GAME);
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 9.h),
-                      child: Text(
-                        'play'.tr,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: cs.onPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              _GradientButton(
+                label: 'play'.tr,
+                icon: LucideIcons.play,
+                compact: true,
+                onTap: () {
+                  ctrl.initGame(diff: Difficulty.custom);
+                  Get.toNamed(Routes.GAME);
+                },
               ),
             ],
           ),
@@ -561,6 +589,78 @@ class _CustomCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _GradientButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool compact;
+
+  const _GradientButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Get.theme.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [cs.primary, cs.tertiary],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(compact ? 10.r : 16.r),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withValues(alpha: 0.35),
+            blurRadius: compact ? 10 : 14,
+            offset: Offset(0, compact ? 4 : 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(compact ? 10.r : 16.r),
+          onTap: onTap,
+          child: Padding(
+            padding: compact
+                ? EdgeInsets.symmetric(horizontal: 18.w, vertical: 9.h)
+                : EdgeInsets.symmetric(vertical: 16.h),
+            child: compact
+                ? Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onPrimary,
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 22.r, color: cs.onPrimary),
+                      SizedBox(width: 10.w),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
     );
   }
 }
