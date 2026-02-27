@@ -9,6 +9,7 @@ import 'package:minesweeper_classic/app/controllers/stats_controller.dart';
 
 import 'package:minesweeper_classic/app/services/purchase_service.dart';
 import 'package:minesweeper_classic/app/controllers/premium_controller.dart';
+import 'package:minesweeper_classic/app/services/app_rating_service.dart';
 
 class AppBinding implements Bindings {
   @override
@@ -43,6 +44,10 @@ if (!Get.isRegistered<HistoryController>()) {
     }
 if (!Get.isRegistered<StatsController>()) {
       Get.lazyPut(() => StatsController());
-    }}
+    }
+    if (!Get.isRegistered<AppRatingService>()) {
+      Get.put(AppRatingService(), permanent: true);
+    }
+  }
 }
 
