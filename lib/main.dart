@@ -20,7 +20,7 @@ import 'package:minesweeper_classic/app/admob/ads_rewarded.dart';
 import 'package:minesweeper_classic/app/bindings/app_binding.dart';
 import 'package:minesweeper_classic/app/routes/app_pages.dart';
 import 'package:minesweeper_classic/app/services/hive_service.dart';
-import 'package:minesweeper_classic/app/theme/app_theme.dart';
+import 'package:minesweeper_classic/app/theme/app_flex_theme.dart';
 import 'package:minesweeper_classic/app/translate/translate.dart';
 
 Future<void> main() async {
@@ -94,8 +94,8 @@ class MinesweeperClassicApp extends StatelessWidget {
           defaultTransition: Transition.fadeIn,
           initialBinding: AppBinding(),
           themeMode: ThemeMode.system,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppFlexTheme.light,
+          darkTheme: AppFlexTheme.dark,
           scrollBehavior: ScrollBehavior().copyWith(overscroll: false),
           navigatorKey: Get.key,
           getPages: AppPages.routes,

@@ -10,7 +10,7 @@ class WonDialog extends GetView<GameController> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs = Get.theme.colorScheme;
 
     return Dialog(
       child: Padding(
@@ -68,7 +68,7 @@ class LostDialog extends GetView<GameController> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs = Get.theme.colorScheme;
 
     return Dialog(
       child: Padding(
@@ -167,7 +167,7 @@ class _BestRecordDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs = Get.theme.colorScheme;
     final best = controller.getBestRecord(controller.difficulty.value);
 
     if (best == null) return const SizedBox.shrink();
