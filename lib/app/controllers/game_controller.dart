@@ -77,6 +77,8 @@ class GameController extends GetxController {
     flagCount.value = 0;
     hasExtraLife.value = false;
     _firstClick = true;
+    _explodedRow = null;
+    _explodedCol = null;
     status.value = GameStatus.initial;
     remainingMines.value = totalMines;
 
@@ -154,23 +156,11 @@ class GameController extends GetxController {
       status.value = GameStatus.playing;
     }
 
-    final c = grid[row][col];
-
-    if (c.isMine) {
-      if (hasExtraLife.value) {
-        // Use extra life: remove mine, continue
-        hasExtraLife.value = false;
-        grid[row][col].isMine = false;
-        _recomputeAdjacent(row, col);
-        grid[row][col].adjacentMines = _countAdjacentMines(row, col);
-        _floodReveal(row, col);
-        grid.refresh();
-        _checkWin();
-        return;
-      }
-
+    if (cell.isMine) {
       // Game over
       HapticFeedback.heavyImpact();
+      _explodedRow = row;
+      _explodedCol = col;
       grid[row][col].isExploded = true;
       grid[row][col].isRevealed = true;
       _revealAllMines();
@@ -201,11 +191,15 @@ class GameController extends GetxController {
 
     while (queue.isNotEmpty) {
       final (r, c) = queue.removeAt(0);
+
+      // Bounds check BEFORE computing key to avoid hash collisions
+      // with valid cells from out-of-bounds coordinates
+      if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+
       final key = r * cols + c;
       if (visited.contains(key)) continue;
       visited.add(key);
 
-      if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
       final cell = grid[r][c];
       if (cell.isRevealed || cell.isFlagged || cell.isMine) continue;
 
@@ -306,7 +300,14 @@ class GameController extends GetxController {
     _timer?.cancel();
     elapsed.value = 0;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (elapsed.value < 999) elapsed.value++;
+      elapsed.value++;
+    });
+  }
+
+  void _startTimerFromCurrent() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      elapsed.value++;
     });
   }
 
@@ -330,12 +331,58 @@ class GameController extends GetxController {
 
   // ─── Extra Life (Rewarded Ad) ──────────────────────────────────
 
+  // Track which cell exploded so we can undo it
+  int? _explodedRow;
+  int? _explodedCol;
+
   void requestExtraLife() {
     RewardedAdManager.to.showAdIfAvailable(
       onUserEarnedReward: (_) {
-        hasExtraLife.value = true;
-        Get.back(); // close lost dialog if open
+        _applyExtraLife();
       },
     );
+  }
+
+  void _applyExtraLife() {
+    if (status.value != GameStatus.lost) return;
+    if (_explodedRow == null || _explodedCol == null) return;
+
+    // Mark extra life as used so the ad offer is not shown again
+    hasExtraLife.value = true;
+
+    final r = _explodedRow!;
+    final c = _explodedCol!;
+
+    // Remove the mine from the exploded cell
+    grid[r][c].isMine = false;
+    grid[r][c].isExploded = false;
+    grid[r][c].isRevealed = false;
+
+    // Hide all mines that were revealed on game over
+    for (int row = 0; row < rows; row++) {
+      for (int col = 0; col < cols; col++) {
+        if (grid[row][col].isMine && !grid[row][col].isFlagged) {
+          grid[row][col].isRevealed = false;
+        }
+        // Reset wrong-flag markers
+        grid[row][col].isWrongFlag = false;
+      }
+    }
+
+    // Recompute adjacent counts around the removed mine
+    _recomputeAdjacent(r, c);
+    grid[r][c].adjacentMines = _countAdjacentMines(r, c);
+
+    // Reveal the previously-exploded cell (flood fill if 0)
+    _floodReveal(r, c);
+
+    // Restore game state
+    status.value = GameStatus.playing;
+    _explodedRow = null;
+    _explodedCol = null;
+    _startTimerFromCurrent();
+
+    grid.refresh();
+    _checkWin();
   }
 }

@@ -112,7 +112,7 @@ class _TopBar extends StatelessWidget {
           // Mine counter
           Obx(() => _CounterBadge(
             icon: '🚩',
-            value: controller.remainingMines.value.clamp(0, 999),
+            value: controller.remainingMines.value.clamp(-99, 999),
             color: cs.error,
           )),
 
@@ -145,7 +145,7 @@ class _TopBar extends StatelessWidget {
           // Timer
           Obx(() => _CounterBadge(
             icon: '⏱',
-            value: controller.elapsed.value.clamp(0, 999),
+            value: controller.elapsed.value,
             color: cs.primary,
           )),
         ],
@@ -176,7 +176,9 @@ class _CounterBadge extends StatelessWidget {
           Text(icon, style: TextStyle(fontSize: 16.sp)),
           SizedBox(width: 6.w),
           Text(
-            value.toString().padLeft(3, '0'),
+            value < 0
+                ? '-${value.abs().toString().padLeft(2, '0')}'
+                : value.toString().padLeft(3, '0'),
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.w900,
