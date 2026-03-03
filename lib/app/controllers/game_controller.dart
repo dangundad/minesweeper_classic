@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:vibration/vibration.dart';
 
+import 'package:minesweeper_classic/app/controllers/setting_controller.dart';
 import 'package:minesweeper_classic/app/data/enums/difficulty.dart';
 import 'package:minesweeper_classic/app/data/enums/game_status.dart';
 import 'package:minesweeper_classic/app/services/hive_service.dart';
@@ -52,6 +53,8 @@ class GameController extends GetxController {
   // ─── Confetti ──────────────────────────────────────────────────
   final RxBool showConfetti = false.obs;
 
+  bool _hasVibrator = false;
+
   // ─── Computed dims ─────────────────────────────────────────────
   int get rows =>
       difficulty.value == Difficulty.custom ? customRows.value : difficulty.value.rows;
@@ -61,6 +64,12 @@ class GameController extends GetxController {
       difficulty.value == Difficulty.custom
           ? customMines.value
           : difficulty.value.mines;
+
+  @override
+  void onInit() {
+    super.onInit();
+    Vibration.hasVibrator().then((v) => _hasVibrator = v);
+  }
 
   @override
   void onClose() {
@@ -158,7 +167,7 @@ class GameController extends GetxController {
 
     if (cell.isMine) {
       // Game over
-      HapticFeedback.heavyImpact();
+      if (SettingController.to.hapticEnabled.value && _hasVibrator) Vibration.vibrate(duration: 200);
       _explodedRow = row;
       _explodedCol = col;
       grid[row][col].isExploded = true;
@@ -174,10 +183,12 @@ class GameController extends GetxController {
     _floodReveal(row, col);
     final revealedAfter = _countRevealed();
 
-    if (revealedAfter - revealedBefore > 1) {
-      HapticFeedback.lightImpact();
-    } else {
-      HapticFeedback.selectionClick();
+    if (SettingController.to.hapticEnabled.value && _hasVibrator) {
+      if (revealedAfter - revealedBefore > 1) {
+        Vibration.vibrate(duration: 50);
+      } else {
+        Vibration.vibrate(duration: 30);
+      }
     }
 
     grid.refresh();
@@ -261,7 +272,7 @@ class GameController extends GetxController {
     final cell = grid[row][col];
     if (cell.isRevealed) return;
 
-    HapticFeedback.lightImpact();
+    if (SettingController.to.hapticEnabled.value && _hasVibrator) Vibration.vibrate(duration: 50);
     grid[row][col].isFlagged = !grid[row][col].isFlagged;
     flagCount.value += grid[row][col].isFlagged ? 1 : -1;
     remainingMines.value = totalMines - flagCount.value;
@@ -277,7 +288,7 @@ class GameController extends GetxController {
       }
     }
 
-    HapticFeedback.mediumImpact();
+    if (SettingController.to.hapticEnabled.value && _hasVibrator) Vibration.vibrate(duration: 100);
     status.value = GameStatus.won;
     _stopTimer();
     _saveBestRecord();
