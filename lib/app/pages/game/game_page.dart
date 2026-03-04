@@ -49,16 +49,31 @@ class _GamePageState extends State<GamePage> {
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
+    final cs = Get.theme.colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text('app_name'.tr, style: TextStyle(fontSize: 18.sp)),
         centerTitle: true,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: cs.surface,
         actions: [
           IconButton(
             icon: const Icon(Icons.home_outlined),
             onPressed: () => Get.back(),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(3),
+          child: Container(
+            height: 3,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [cs.primary, cs.tertiary],
+              ),
+            ),
+          ),
+        ),
       ),
       body: SafeArea(
         child: Stack(
