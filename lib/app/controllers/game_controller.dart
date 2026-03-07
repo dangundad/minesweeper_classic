@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:confetti/confetti.dart';
 import 'package:get/get.dart';
 import 'package:vibration/vibration.dart';
 
@@ -51,7 +52,7 @@ class GameController extends GetxController {
   Timer? _timer;
 
   // ─── Confetti ──────────────────────────────────────────────────
-  final RxBool showConfetti = false.obs;
+  late final confettiController = ConfettiController(duration: const Duration(seconds: 2));
 
   bool _hasVibrator = false;
 
@@ -74,6 +75,7 @@ class GameController extends GetxController {
   @override
   void onClose() {
     _timer?.cancel();
+    confettiController.dispose();
     super.onClose();
   }
 
@@ -292,7 +294,7 @@ class GameController extends GetxController {
     status.value = GameStatus.won;
     _stopTimer();
     _saveBestRecord();
-    showConfetti.value = true;
+    confettiController.play();
 
     // Auto-flag all mines
     for (int r = 0; r < rows; r++) {
